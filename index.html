@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time Complexity Isn't All You Need</title>
+<style>
+  :root { --ink:#1d1d1d; --muted:#6b6b6b; --accent:#1f6f63; --rule:#e6e6e6; }
+  * { box-sizing:border-box; }
+  body {
+    font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+    color: var(--ink); background:#fff; line-height:1.6; margin:0;
+  }
+  .wrap { max-width:680px; margin:0 auto; padding:5rem 1.5rem 6rem; }
+  h1 { font-size:2.4rem; font-weight:700; line-height:1.15; margin:0 0 .6rem;
+       padding-bottom:.9rem; border-bottom:1px solid var(--rule); }
+  .deck { font-size:1.2rem; font-style:italic; color:var(--muted); margin:0 0 2rem; }
+  p { margin:1rem 0; }
+  .cards { display:flex; gap:1rem; flex-wrap:wrap; margin:2rem 0; }
+  .card {
+    flex:1 1 240px; border:1px solid var(--rule); border-radius:10px;
+    padding:1.3rem 1.4rem; text-decoration:none; color:inherit;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .card:hover { border-color:var(--accent); box-shadow:0 6px 20px rgba(31,111,99,.12); }
+  .card h2 { font-size:1.2rem; margin:0 0 .3rem; color:var(--accent); }
+  .card span { font-size:.95rem; color:var(--muted); }
+  a.inline { color:var(--accent); text-underline-offset:2px; }
+  .preview { display:block; margin:2.5rem 0 0; }
+  .preview img {
+    width:100%; height:auto; border:1px solid var(--rule); border-radius:8px;
+    box-shadow:0 6px 22px rgba(29,29,29,.10);
+  }
+  footer { margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--rule);
+           font-size:.92rem; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Time Complexity Isn't All You Need</h1>
+  <p class="deck">Big-O ranks algorithms on an imaginary computer. On a real one,
+  how you touch memory often matters more.</p>
+
+  <p>Three small C++ benchmarks, measured on one laptop, showing where asymptotic
+  complexity stops predicting real performance: row-major versus column-major
+  traversal, the linear-versus-binary search crossover, and the
+  <code>std::list</code> versus <code>std::vector</code> find-and-delete result.</p>
+
+  <div class="cards">
+    <a class="card" href="article.html">
+      <h2>Read the article &rarr;</h2>
+      <span>The full write-up with charts and code.</span>
+    </a>
+    <a class="card" href="mini_article.html">
+      <h2>One-page version &rarr;</h2>
+      <span>The short, two-column handout.</span>
+    </a>
+  </div>
+
+  <a class="preview" href="article.html">
+    <img src="images/mini_article.png" alt="One-page summary of the three benchmarks.">
+  </a>
+
+  <footer>
+    Source code, build setup, and hardware notes are in the
+    <a class="inline" href="https://github.com/tms-h/comssa-may">repository</a>.
+    Build the benchmarks with <code>make run</code> and reproduce the numbers yourself.
+  </footer>
+</div>
+</body>
+</html>

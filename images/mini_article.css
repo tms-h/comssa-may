@@ -1,0 +1,97 @@
+/* Two-column handout styling for mini_article.html.
+   Same clean serif theme as the full article, laid out in two columns. */
+:root {
+  --ink:    #1d1d1d;
+  --muted:  #6b6b6b;
+  --accent: #1f6f63;
+  --rule:   #e6e6e6;
+  --code-bg:#f3f3f1;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+  color: var(--ink);
+  background: #ffffff;
+  line-height: 1.5;
+  font-size: 17px;
+  margin: 0;
+}
+
+/* The .page wrapper is the column container. */
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 1.6rem 3.5rem;
+  column-count: 2;
+  column-gap: 2.4rem;
+}
+
+/* Title and deck span both columns. */
+h1 {
+  column-span: all;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 0.6rem;
+}
+/* First paragraph after the title is the deck. */
+h1 + p {
+  column-span: all;
+  font-size: 1.18rem;
+  font-style: italic;
+  color: var(--muted);
+  line-height: 1.4;
+  margin: 0 0 1.2rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 2px solid var(--rule);
+}
+
+p { margin: 0 0 0.85rem; }
+p:first-of-type { margin-top: 0; }
+strong { font-weight: 700; color: var(--ink); }
+em { font-style: italic; }
+
+a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+
+/* Charts: stay inside their column, never split across the column break. */
+figure {
+  margin: 0.5rem 0 1.1rem;
+  break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  text-align: center;
+}
+figure img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+}
+figcaption {
+  font-style: italic;
+  font-size: 0.76rem;
+  color: var(--muted);
+  margin-top: 0.35rem;
+  line-height: 1.35;
+}
+
+code {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.82em;
+  background: var(--code-bg);
+  padding: 0.06em 0.34em;
+  border-radius: 4px;
+}
+
+/* The closing line: let it sit on its own, spanning both columns. */
+.page > p:last-child {
+  column-span: all;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 2px solid var(--rule);
+  font-size: 0.95rem;
+}
+
+@media (max-width: 600px) {
+  .page { column-count: 1; padding: 2.2rem 1.2rem; }
+  h1 { font-size: 1.7rem; }
+}
