@@ -1,5 +1,9 @@
 # Time Complexity Isn't All You Need — benchmark kit
 
+**Live site: <https://tms-h.github.io/comssa-may/>** — read the
+[full article](https://tms-h.github.io/comssa-may/article.html) or the
+[one-page version](https://tms-h.github.io/comssa-may/mini_article.html).
+
 Three small, self-contained C++ benchmarks that show where Big-O stops
 predicting real performance, because real hardware has a memory hierarchy and a
 speculating pipeline. Companion to the article in [`article.md`](article.md).
