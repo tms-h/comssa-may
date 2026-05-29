@@ -1,7 +1,7 @@
 # Time Complexity Isn't All You Need — benchmark kit
 
-**Live site: <https://tms-h.github.io/comssa-may/>** — read the
-[full article](https://tms-h.github.io/comssa-may/article.html) or the
+**Live site: <https://tms-h.github.io/comssa-may/>**. The site root is the full
+article. There is also a
 [one-page version](https://tms-h.github.io/comssa-may/mini_article.html).
 
 Three small, self-contained C++ benchmarks that show where Big-O stops
@@ -197,9 +197,9 @@ properly.
 ## The article (charts + HTML)
 
 [`article.md`](article.md) is the newsletter draft with these numbers and three
-charts. [`article.html`](article.html) is a **single self-contained file**
-(CSS + chart images base64-inlined — open it in any browser, e-mail it, host it
-anywhere, no assets needed).
+charts. [`index.html`](index.html) is a **single self-contained file** that
+renders it (CSS + chart images base64-inlined, so it opens in any browser with no
+assets needed). It is also the landing page of the live site.
 
 To regenerate the charts and rebuild the HTML (needs Python+matplotlib and
 pandoc):
@@ -211,7 +211,7 @@ python3 images/make_charts.py        # -> images/bench{1,2,3}_*.png + bench3_mon
 pandoc article.md -f markdown -t html5 --standalone --embed-resources \
   --css images/article.css --metadata pagetitle="Time Complexity Isn't All You Need" \
   --include-before-body=<(echo '<div class="page">') \
-  --include-after-body=<(echo '</div>') -o article.html
+  --include-after-body=<(echo '</div>') -o index.html
 ```
 
 The chart data in `images/make_charts.py` is hard-coded to the canonical
@@ -228,9 +228,12 @@ src/bench3_list_vs_vector.cpp  find-and-delete: list vs vector
 Makefile                       build / run / clean
 README.md                      this file
 article.md                     the newsletter article (with these numbers)
-article.html                   self-contained rendered article (charts inlined)
+index.html                     self-contained rendered article (site landing page)
+mini_article.md / .html        the short one-page two-column version
 images/make_charts.py          regenerates the chart PNGs
-images/article.css             styling for article.html
+images/article.css             styling for index.html
+images/mini_article.css        styling for mini_article.html
+images/mini_article.png        high-res one-page export image
 images/bench*.png              the four charts (incl. Monte Carlo distribution)
 results/montecarlo_bench3.csv  per-run Monte Carlo data (200 runs)
 ```

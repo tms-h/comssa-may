@@ -1,4 +1,4 @@
-/* Styling for article.html (pandoc --standalone --embed-resources).
+/* Styling for index.html, the rendered article (pandoc --standalone --embed-resources).
    Clean: white page, one simple serif, dark headings, restrained accent. */
 :root {
   --ink:    #1d1d1d;
