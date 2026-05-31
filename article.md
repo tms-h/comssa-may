@@ -1,26 +1,37 @@
 # Time Complexity Isn't All You Need
 
-Two ways to sum the same array. The arithmetic is identical and both are O(n²).
-On my laptop one of them runs about 70 times slower than the other. Nothing about
-the algorithm changed, only the order the elements get read in.
+So here are two ways to sum the same array. The arithmetic is completely
+identical, and both of them are O(n²). And yet, on my laptop, one of them runs
+about 70 times slower than the other. Nothing about the algorithm itself changed
+at all. The only thing that's actually different between them is the order the
+elements get read in.
 
-Big-O is how your DSA course teaches you to choose between options, and the rule
-is simple: lower asymptotic cost wins. That ranking is real, but it describes an
-idealised machine where every memory access costs the same and branches are free.
-No such machine exists. Real CPUs keep the data you touched recently close by and
-leave everything else slow to reach. They also run ahead of you by guessing which
-way each branch will go. Because of that, the constant factors Big-O throws away
-often decide which option is actually faster at the sizes you run in practice.
+Big-O is the tool your university course preaches for choosing between your data
+structures and algorithms, and the rule it gives you is dead simple: the much
+lower asymptotic cost always wins. And that general idea isn't wrong, exactly,
+but it's more so describing an idealised machine, a sort of perfect world where
+every memory access costs exactly the same and branches are basically free. In
+reality, no such machine actually exists. In real life, the way a CPU is
+physically built matters a whole lot, and sometimes it's even the entire problem.
+Memory is laid out in layers, with little fast caches sitting right up against the
+core and the big slow main memory parked much further away, and on top of that
+the hardware spends a lot of its time just guessing what you're going to do next.
+So those constant factors that Big-O so happily throws away are very often the
+things that actually end up deciding which option is faster at the sizes you're
+realistically going to run in practice.
 
-Three experiments below. Every number is measured on one machine, and the code
-is up at [github.com/tms-h/comssa-may](https://github.com/tms-h/comssa-may) so
-you can run it yourself. One warning first: compile with optimisations on. At
-`-O0` the numbers fall apart.
+Anyway, I've got three little experiments for you below. Every single number here
+was measured on the one machine, and the code is all sitting up at
+[github.com/tms-h/comssa-may](https://github.com/tms-h/comssa-may) so you can just
+run it yourself if you want. One warning before you do, though: make sure you
+compile with optimisations turned on. At `-O0` the numbers basically fall apart
+and none of this really holds.
 
 ## Experiment 1: same loop, two orders
 
-Take a 256 MB grid of ints and sum every element. The two loops below both do
-that, and they only differ in which index sits on the inner loop.
+Okay so take a 256 MB grid of ints and sum up every element. The two loops below
+both do exactly that, and honestly the only thing that changes between them is
+which index ends up sitting on the inner loop.
 
 ```cpp
 // Version A: inner loop runs over j (the contiguous direction)
@@ -38,11 +49,12 @@ for (int j = 0; j < N; ++j)
         sum += a[i * N + j];
 ```
 
-Both touch every element once and do the same additions. So before you scroll:
-is there even a difference? Reading across rows or down columns should be the
-same work, surely this is all just noise.
+Both of them touch every single element once, and both do the exact same
+additions along the way. So before you scroll on down: is there even a difference
+here at all? Reading across the rows or down the columns is surely the same amount
+of work either way, and this is all probably just going to be noise, right?
 
-Here are the results.
+Well, here's what actually happened.
 
 | version | inner loop | time |
 |---|---|---:|
@@ -51,25 +63,30 @@ Here are the results.
 
 ![Bar chart on a log scale. Version A (row-major) takes about 5 ms and Version B (column-major) takes about 348 ms for the identical sum over a 256 MB array.](images/bench1_traversal.png)
 
-A took 5.06 ms. B took 347.83 ms for the exact same sum, about 70 times slower.
-The reason is that memory does not come back one int at a time. It comes in
-64-byte chunks called cache lines, around sixteen ints each. Version A reads
-along a row, so it uses all sixteen ints in a line before it moves on, and the
-hardware notices the steady forward pattern and grabs the next line early.
-Version B reads down a column, so it uses one int from a line and then jumps far
-enough that the next read misses the cache again. Almost every read in B is left
-waiting on main memory.
+A took 5.06 ms. B took a whopping 347.83 ms, for the exact same sum. That's about
+70 times slower. And the reason really comes down to this: memory doesn't just
+come back to you one int at a time. It actually arrives in 64-byte chunks called
+cache lines, which works out to roughly sixteen ints each. Version A reads
+straight along a row, so it ends up using all sixteen ints in a line before it
+ever has to move on, and the hardware notices that nice steady forward march and
+starts grabbing the next line early for you. Version B, on the other hand, reads
+down a column, so it uses a single int out of a line and then immediately jumps
+far enough away that the next read just misses the cache all over again. So almost
+every read in B ends up basically sitting there, twiddling its thumbs, waiting on
+main memory.
 
-Identical Big-O, both O(n²), and one is 70 times faster than the other. School
-never mentions the thing doing all the work here.
+Same Big-O, both of them O(n²), and yet one is 70 times faster than the other.
+The thing doing all the actual work here is the exact thing school never quite
+gets around to mentioning.
 
 ## Experiment 2: when linear search wins
 
-Here is another one. Binary search halves a sorted array each step and runs in
-O(log n), while a linear scan checks elements one at a time in O(n). And log(n) <
-n for every n > 0, so binary search should win at every size. To check, I swept
-the array size N and ran a lot of random lookups on a sorted array, timing each
-method per query.
+Right, here's another one. Binary search halves a sorted array on each step and
+runs in O(log n), while a plain linear scan just checks the elements one at a
+time, so it's O(n). And since log(n) < n for every n > 0, well, binary search
+should obviously win at every single size, right? To actually check that, I swept
+the array size N and ran a whole pile of random lookups against a sorted array,
+timing each method per query.
 
 | N | linear (ns/query) | binary (ns/query) | winner |
 |---:|---:|---:|:--|
@@ -82,31 +99,37 @@ method per query.
 
 ![Log-log line chart of time per query against array size N. The linear-scan line is lower for small N, the two lines cross near N equals 256, and the linear line then rises far above binary search.](images/bench2_search.png)
 
-Surprising. The linear scan is faster up to about 128 elements, and 128 is not a
-small array. A lot of real lookups happen in arrays smaller than that, so linear
-is quietly winning across most everyday cases. The two methods cross over near
-N = 256 here, and past that binary search runs away with it.
+Well, huh, that's a bit surprising. The linear scan is actually faster all the way
+up to about 128 elements, and 128 is honestly not a small array at all. Plenty of
+real lookups happen in arrays smaller than that, which means linear is quietly
+winning across most of the everyday cases you're ever actually going to hit. The
+two methods only cross over somewhere around N = 256 here, and past that point
+binary search just runs away with it.
 
-The reason is short. A small array sits in fast cache, so the scan is one tight
-loop the CPU rips straight through. Binary search jumps to a spot that depends on
-the comparison it just made, so the branch predictor cannot guess where it lands
-and the pipeline stalls on every step. Only once the array is large do those few
-jumps beat scanning thousands of elements.
+The reason is a pretty short one, actually. A small array sits entirely inside the
+fast cache, so the scan is really just one tight little loop that the CPU rips
+straight through. Binary search, on the other hand, jumps off to a spot that
+depends on the comparison it just made, so the branch predictor can't really
+guess where it's going to land, and the pipeline ends up stalling on basically
+every step. It's only once the array gets properly large that those few clever
+jumps start actually beating the cost of scanning through thousands of elements.
 
-So a worse Big-O beat a better one. O(n) came out ahead of O(log n) over the
-whole range a hobby project is ever likely to touch, which is the exact opposite
-of what the proof tells you to expect.
+So yeah, a worse Big-O beat a better one. O(n) came out ahead of O(log n) over
+pretty much the entire range a hobby project is ever realistically going to touch,
+which is just about the exact opposite of what the proof tells you to expect.
 
 ## Experiment 3: the cost of finding the node
 
-This one surprised me the most. Deleting from a linked list is O(1) once you are
-holding the node, while deleting from an array is O(n) because everything after
-it has to shift down. Run 20,000 deletes and the list does at most 20,000 cheap
-splices, while the vector can shift nearly 20,000 elements on every single
-delete. On paper the vector does orders of magnitude more work. The catch the
-example always skips is that you have to find the element before you can delete
-it. So the workload here walks from the front to find a value, erases it, and
-repeats until the container is empty.
+This is the one that surprised me the most, honestly. Deleting from a linked list
+is O(1) once you're already holding the node, while deleting from an array is
+O(n), because everything sitting after it has to shift down to fill the gap. So
+run 20,000 deletes and the list does at most 20,000 nice cheap splices, while the
+vector might have to shift nearly 20,000 elements on every single delete. On
+paper, the vector is clearly doing orders of magnitude more work. But the catch
+the textbook example always quietly skips right over is that you actually have to
+find the element first before you can go and delete it. So the workload here walks
+from the front to find a value, erases it, and then just repeats until the whole
+container is empty.
 
 | container | time |
 |---|---:|
@@ -115,71 +138,86 @@ repeats until the container is empty.
 
 ![Bar chart. Finding and deleting all 20,000 elements takes about 49 ms with std::vector and about 242 ms with std::list.](images/bench3_list_vs_vector.png)
 
-The vector took 49.33 ms and the list took 242.14 ms, so the list is about five
-times slower despite the cheaper delete. Finding the node is what costs. A list
-scatters its nodes across the heap and links them with pointers, so a search
-follows those pointers all over memory and eats a cache miss at almost every
-node. The vector keeps everything in one block, so the search is the same fast
-scan as Experiment 1 and the delete is one bulk `memmove`.
+The vector took 49.33 ms and the list took 242.14 ms, so the list comes out about
+five times slower, despite having the supposedly cheaper delete. Finding the node
+is what really costs you. A list scatters all its nodes across the heap and links
+them together with pointers, so searching through it means following those
+pointers all over the place in memory, eating a fresh cache miss at nearly every
+single node. The vector, meanwhile, just keeps everything packed into one
+contiguous block, so the search is that same fast scan we already saw back in
+Experiment 1, and the actual delete is just one bulk `memmove`.
 
-This is the result Bjarne Stroustrup is known for, that arrays beat linked lists
-for most everyday work. You can feel the intuition pulling the other way. Think
-of an order book, the live list of buy and sell orders in a market. Orders get
-cancelled constantly, so a linked list looks perfect: O(1) to splice one out. Yet
-plenty of fast order books keep their orders in contiguous arrays anyway, because
-walking pointers to find the order you want to cancel costs more than the array
-shuffles ever do.
+This is basically the result Bjarne Stroustrup is famous for: arrays beat linked
+lists for most everyday work. And you can really feel your intuition pulling the
+other way hard on this one. Think about an order book, say, the live list of buy
+and sell orders in a market. Orders get cancelled constantly, so a linked list
+looks just about perfect for the job: O(1) to splice one right out. And yet plenty
+of seriously fast order books keep their orders in contiguous arrays anyway,
+because walking pointers around to find the order you want to cancel ends up
+costing way more than all that array shuffling ever does.
 
-One run could be luck, so here is the same workload 200 times, each with a fresh
-random shuffle and delete order, timing one pass each.
+Of course, one run could just be luck, so here's the same workload run 200 times
+over, each one with a fresh random shuffle and delete order, timing a single pass
+each time.
 
 ![Overlaid histogram of 200 random runs. std::vector times cluster tightly near 8 ms while std::list times spread into a long tail past 100 ms, and vector is faster in every run.](images/bench3_montecarlo.png)
 
-The vector won all 200 runs. The shapes are the interesting part. The vector's
-times bunch up near 8 ms, while the list's spread into a long tail that reaches
-past 100 ms, because how scattered the nodes end up changes from one run to the
-next. A tail like that is how a list turns into a random latency spike in
-production, long after the Big-O on the whiteboard looked fine.
+The vector won all 200 runs. But the shapes are the really interesting part here.
+The vector's times all bunch up nice and tight near 8 ms, while the list's spread
+right out into a long tail that reaches well past 100 ms, basically because how
+scattered the nodes end up is a bit different from one run to the next. And a tail
+like that is exactly how a list quietly turns into a random latency spike in
+production, long after the Big-O up on the whiteboard looked perfectly fine.
 
 ## What on earth is happening?
 
-A few pieces of hardware explain all three results.
+So, a handful of hardware details end up explaining all three of these results.
 
-- **The cache hierarchy.** Memory is not one flat pool. Your CPU has a few tiny
-  fast caches right next to it and a big slow main memory further out. Reading
-  from the nearest cache takes about a nanosecond, reaching main memory takes
-  about a hundred. Data you used recently, or data sitting right beside it, is in
-  the fast tier. Everything else makes you wait.
-- **Prefetching.** The CPU watches how you read memory. When you move through it
-  in a straight line, it fetches the chunks ahead of you before you ask. Walk
-  forward through an array and it keeps pace for free. Jump around, like a column
-  walk or a pointer chase, and it cannot guess what you will need.
-- **Branch prediction.** The CPU does not wait to learn which way an `if` goes.
-  It guesses and runs ahead. Guess right and the branch was almost free. Guess
-  wrong, which is what binary search's data-dependent jumps cause, and it throws
-  away the work it started and begins again.
+- **The cache hierarchy.** Memory isn't just one big flat pool. Your CPU has a
+  few tiny, really fast caches sitting right up next to it, and then a big, slow
+  main memory parked much further out. Reading from the nearest cache takes about
+  a nanosecond; reaching all the way out to main memory takes more like a hundred.
+  Data you used recently, or data sitting right beside it, lives up in the fast
+  tier. Everything else just makes you wait.
+- **Prefetching.** The CPU is always watching the way you read memory. When you
+  move through it in a nice straight line, it starts fetching the chunks ahead of
+  you before you've even asked for them. So walk forward through an array and it
+  keeps pace with you for free. Jump around all over the place, though, like a
+  column walk or a pointer chase, and it has no real way to guess what you'll need
+  next.
+- **Branch prediction.** The CPU doesn't just sit there and wait to learn which
+  way an `if` is going to go. It guesses, and it runs on ahead anyway. Guess right
+  and the branch was very nearly free; guess wrong, which is exactly what binary
+  search's data-dependent jumps keep causing, and it has to throw away all the
+  work it already started and just begin again.
 - **The pattern.** In all three experiments, contiguous memory read in order beat
-  the cleverer structure with the better complexity on paper. Reach for a flat
-  array first, and only move to pointers once you have measured a reason to.
+  the cleverer structure with the better complexity on paper. So reach for a plain
+  flat array first, and only move over to pointers once you've actually gone and
+  measured a real reason to.
 
-Big-O is still the right way to think about how cost grows when inputs get big,
-and at a big enough N it always wins. The catch is that courses treat the ranking
-as the final answer, when on real hardware it is closer to the starting point.
-Keep both ideas at once: Big-O tells you how things scale, and the cache and the
-pipeline decide who is faster at the size you are actually running. When it
-matters, measure it, with an optimised build, a warm-up, a few runs, and the
-minimum taken. The two loops at the top of this page were a few characters apart
-and 70 times apart in speed. Once you start measuring, you find that gap
+Big-O is still the right way to think about how cost grows as your inputs get big,
+and at a large enough N it does always win out in the end. The catch is just that
+courses tend to treat that ranking as the final answer, when on real hardware it's
+honestly a lot closer to the starting point. The real trick is to hold both ideas
+in your head at the same time: Big-O tells you how things scale, and the cache and
+the pipeline are the ones that actually decide who's faster at the size you happen
+to be running today. And when it really matters, just measure it, with an
+optimised build, a warm-up, a few runs, and the minimum taken. The two loops at
+the very top of this page were only a few characters apart, and 70 times apart in
+speed. Once you start actually measuring, you start finding that gap absolutely
 everywhere.
 
 ## Further reading
 
 - **Bjarne Stroustrup**, who created C++. His list versus vector demonstration is
-  the direct source of Experiment 3 and the fastest way to see the effect for
-  yourself.
+  the direct source of Experiment 3, and honestly the fastest way to just see the
+  effect for yourself.
 - **Scott Meyers**. His book *Effective C++* is the classic next step in the
-  language, and he has a talk on CPU caches that lines up with Experiments 1 and 2.
-- **Mike Acton**. His CppCon talk on data-oriented design pushes this idea much
-  further, building whole programs around how the data sits in memory.
-- **Google Benchmark**, the library you would actually reach for to measure this
-  properly, rather than the small harness in this repo.
+  language, and he's also got a talk on CPU caches that lines up really nicely with
+  Experiments 1 and 2.
+- **Mike Acton**. His CppCon talk on data-oriented design pushes this whole idea
+  much, much further, building entire programs around how the data actually sits
+  in memory.
+- **Google Benchmark**, which is the library you'd actually reach for to measure
+  this stuff properly, rather than the little harness I've thrown together here in
+  this repo.
